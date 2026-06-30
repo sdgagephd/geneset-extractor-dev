@@ -1,0 +1,2 @@
+model_id	model_family	description	enabled
+PT1	tumor_vs_normal	phospho_tumor_vs_adjacent_normal_protein_adjusted	true

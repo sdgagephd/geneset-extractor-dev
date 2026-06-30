@@ -1,0 +1,11 @@
+cohort_id	cohort_label	proteome_pdc_study_id	phospho_pdc_study_id	has_adjacent_normal	enabled
+ccrcc	Clear Cell RCC	PDC000127	PDC000128	true	true
+ucec	Endometrial Carcinoma	PDC000125	PDC000126	true	false
+brca	Breast (Prospective)	PDC000120	PDC000121	true	false
+gbm	Glioblastoma	PDC000204	PDC000205	false	false
+hnscc	Head and Neck SCC	PDC000221	PDC000222	true	false
+lscc	Lung SCC	PDC000234	PDC000232	true	false
+luad	Lung Adeno	PDC000153	PDC000149	true	false
+coad	Colon Adeno	PDC000116	PDC000117	true	false
+ov	Ovarian (Prospective)	PDC000110	PDC000119	true	false
+pdac	Pancreatic Adeno	PDC000270	PDC000271	true	false

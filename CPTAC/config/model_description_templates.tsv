@@ -1,0 +1,2 @@
+model_id	description_template
+PT1	CPTAC {cohort_label} tumor-vs-adjacent-normal phosphoregulation gene set ({variant_id}), derived from PDC phosphoproteome {phospho_pdc_study_id} and proteome {proteome_pdc_study_id}.

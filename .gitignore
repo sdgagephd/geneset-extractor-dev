@@ -10,6 +10,10 @@
 !geneset-extractor-liger.apptainer.def
 
 # or these needed files
+!CPTAC/config/study_manifest.tsv
+!CPTAC/config/model_list.tsv
+!CPTAC/config/model_manifest.tsv
+!CPTAC/config/model_description_templates.tsv
 !GTEx/config/age_binned_model_manifest.tsv
 !GTEx/config/continuous_age_model_manifest.tsv
 !GTEx/config/model_list.tsv
@@ -28,6 +32,7 @@
 !HuBMAP/config/model_description_templates.tsv
 
 # Allow traversing these subdirectories
+!CPTAC/
 !LINCS_L1000/
 !RummaGEO/
 !ExRNA/
@@ -43,6 +48,7 @@
 !proposals/
 !docs/
 
+!CPTAC/**/
 !LINCS_L1000/**/
 !RummaGEO/**/
 !ExRNA/**/
@@ -149,5 +155,12 @@
 !KOMP2/**/*.md
 !KOMP2/**/*.pdf
 !KOMP2/**/*.png
+!CPTAC/**/*.py
+!CPTAC/**/*.r
+!CPTAC/**/*.R
+!CPTAC/**/*.sh
+!CPTAC/**/*.md
+!CPTAC/**/*.pdf
+!CPTAC/**/*.png
 
 archive/
