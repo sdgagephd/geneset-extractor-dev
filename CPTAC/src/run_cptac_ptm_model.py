@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import subprocess
@@ -29,6 +30,46 @@ def _run(cmd: list[str], env: dict, dig_dir: Path, log_lines: list[str]) -> None
     log_lines.append(completed.stdout)
     if completed.returncode != 0:
         raise subprocess.CalledProcessError(completed.returncode, cmd, output=completed.stdout)
+
+
+def write_model_sidecars(
+    *,
+    extractor_dir: Path,
+    model_id: str,
+    cohort_label: str,
+    phospho_pdc_study_id: str,
+    proteome_pdc_study_id: str,
+) -> None:
+    """Emit one geneset.model.json per variant carrying the description-template vars.
+
+    The shared refresh tool (`refresh_model_metadata_and_provenance.py`) renders model
+    descriptions from `config/model_description_templates.tsv`, resolving `{model.<var>}`
+    placeholders against this sidecar. Writing it here keeps CPTAC on the shared metadata
+    tooling instead of a bespoke description pathway.
+    """
+    manifest = extractor_dir / "manifest.tsv"
+    if not manifest.exists():
+        return
+    for row in sio.read_tsv(manifest):
+        meta_rel = (row.get("meta_path") or "").strip()
+        if not meta_rel:
+            continue
+        sidecar = (extractor_dir / meta_rel).parent / "geneset.model.json"
+        sidecar.write_text(
+            json.dumps(
+                {
+                    "model_id": model_id,
+                    "cohort_label": cohort_label,
+                    "variant_id": (row.get("variant_id") or "").strip(),
+                    "phospho_pdc_study_id": phospho_pdc_study_id,
+                    "proteome_pdc_study_id": proteome_pdc_study_id,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
 
 
 def run_model(
@@ -112,6 +153,11 @@ def run_model(
             "--condition_a", eflags.get("condition_a", "case"),
             "--condition_b", eflags.get("condition_b", "control"),
             "--protein_adjustment_run_mode", eflags.get("protein_adjustment_run_mode", "compare_if_protein"),
+            # CPTAC CDAP proteome reports are gene-level (no per-row protein accession), so the
+            # phospho-site -> proteome subtraction must join on gene symbol. Without this the
+            # converter falls back to protein_accession, which is populated (RefSeq) on the phospho
+            # side but empty on the gene-level proteome side -> 0 matched sites -> subtract == none.
+            "--protein_accession_column", eflags.get("protein_accession_column", "gene_symbol"),
             "--select", eflags.get("select", "top_k"),
             "--top_k", eflags.get("top_k", "200"),
             "--gene_aggregation", eflags.get("gene_aggregation", "signed_topk_mean"),
@@ -125,6 +171,15 @@ def run_model(
         ]
         cmd, env = engine_cmd(dig_dir, python_bin, *extract_args)
         _run(cmd, env, dig_dir, log_lines)
+
+        # 5. model sidecars (description-template vars for the shared refresh tooling)
+        write_model_sidecars(
+            extractor_dir=extractor_dir,
+            model_id=model_id,
+            cohort_label=study["cohort_label"],
+            phospho_pdc_study_id=study["phospho_pdc_study_id"],
+            proteome_pdc_study_id=study["proteome_pdc_study_id"],
+        )
 
         return model_out
     finally:
