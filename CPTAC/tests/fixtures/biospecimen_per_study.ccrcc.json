@@ -1,0 +1,10 @@
+{
+  "data": {
+    "biospecimenPerStudy": [
+      {"aliquot_submitter_id": "CPT0000010003", "sample_submitter_id": "C3N-00001-T", "case_submitter_id": "C3N-00001", "sample_type": "Primary Tumor"},
+      {"aliquot_submitter_id": "CPT0000010004", "sample_submitter_id": "C3N-00001-N", "case_submitter_id": "C3N-00001", "sample_type": "Solid Tissue Normal"},
+      {"aliquot_submitter_id": "CPT0000020003", "sample_submitter_id": "C3N-00002-T", "case_submitter_id": "C3N-00002", "sample_type": "Primary Tumor"},
+      {"aliquot_submitter_id": "CPT0000020004", "sample_submitter_id": "C3N-00002-N", "case_submitter_id": "C3N-00002", "sample_type": "Solid Tissue Normal"}
+    ]
+  }
+}
