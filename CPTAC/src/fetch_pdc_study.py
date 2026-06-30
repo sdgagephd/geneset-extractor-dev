@@ -1,7 +1,13 @@
 """Fetch CPTAC CDAP reports + provenance metadata from the PDC GraphQL API (stdlib only)."""
 from __future__ import annotations
+import re
 
 DRS_PREFIX = "drs://dg.4DFC/"
+
+_REPORT_PATTERNS = {
+    "phosphosite": re.compile(r"phosphosite\.(?:tmt\d+|itraq\d*)\.tsv$", re.IGNORECASE),
+    "proteome": re.compile(r"(?<!phospho)proteome\.(?:tmt\d+|itraq\d*)\.tsv$", re.IGNORECASE),
+}
 
 _TUMOR_TYPES = {"primary tumor", "tumor", "recurrent tumor", "metastatic"}
 _NORMAL_TYPES = {"solid tissue normal", "normal", "blood derived normal", "adjacent normal"}
@@ -39,24 +45,20 @@ def parse_files_per_study(payload: dict, *, role: str, pdc_study_id: str) -> lis
 
 
 def pick_report_file(rows: list[dict], *, kind: str) -> dict:
-    """kind: 'phosphosite' or 'proteome'. Prefer the gene/site-level report TSV."""
-    needles = {
-        "phosphosite": ["phosphosite"],
-        "proteome": ["proteome"],
-    }[kind]
-    avoid = {
-        "phosphosite": ["phosphopeptide", "peptide", "spectral", "precursor", "mzid", "mzml"],
-        "proteome": ["phospho", "phosphosite", "peptide", "spectral", "precursor", "mzid", "mzml"],
-    }[kind]
-    candidates = [
-        r
-        for r in rows
-        if any(n in r["file_name"].lower() for n in needles)
-        and not any(a in r["file_name"].lower() for a in avoid)
-    ]
+    """Select the canonical gene/site-level CDAP quant report (`<fraction>.tmtNN.tsv`).
+
+    kind: 'phosphosite' or 'proteome'. Excludes tarballs, peptide/summary/qc files,
+    and (for proteome) phosphoproteome reports.
+    """
+    pattern = _REPORT_PATTERNS[kind]
+    candidates = [r for r in rows if r.get("file_name") and pattern.search(r["file_name"])]
     if not candidates:
-        raise ValueError(f"No {kind} report file found among {[r['file_name'] for r in rows]}")
-    # Prefer the shortest matching name (the canonical '.phosphosite.tmtNN.tsv' / '.tmtNN.tsv').
+        raise ValueError(
+            f"No {kind} report file matching {pattern.pattern!r} found among "
+            f"{[r.get('file_name') for r in rows]}"
+        )
+    # If a study has several matches (e.g. tmt10 + tmt11 reprocessings), the shortest
+    # canonical name is the primary report.
     return sorted(candidates, key=lambda r: len(r["file_name"]))[0]
 
 

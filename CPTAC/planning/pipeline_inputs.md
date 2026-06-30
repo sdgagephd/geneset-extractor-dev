@@ -27,7 +27,7 @@ All CPTAC CDAP processed matrices are open-access (CC-BY). The pipeline fetches 
 - Endpoint: `https://pdc.cancer.gov/graphql` (HTTP POST `{"query": ...}`, no authentication required)
 - `acceptDUA: true` is passed in every query to assert acceptance of the PDC data-use agreement
 
-Three queries are issued per cohort: two study-resolution queries to obtain `study_id` UUIDs, one file-listing query per study (keyed by UUID), and one biospecimen query (keyed by `pdc_study_id`):
+Five API calls of three query types are issued per cohort: two `study` resolution queries (one per study, to resolve each `pdc_study_id` to a `study_id` UUID), two `filesPerStudy` queries (one per study, keyed by `study_id` UUID), and one `biospecimenPerStudy` query (keyed by `pdc_study_id`):
 
 - `study(pdc_study_id: "<id>", acceptDUA: true)` — resolves a `pdc_study_id` (e.g. `PDC000127`) to its `study_id` UUID; the pipeline first calls this for each study because `filesPerStudy(pdc_study_id: ...)` returns null-filled records for some study versions, whereas `filesPerStudy(study_id: <UUID>)` is reliable
 - `filesPerStudy(study_id: "<uuid>", acceptDUA: true)` — returns `file_id`, `file_name`, `md5sum`, `file_size`, `signedUrl { url }` for every file in the study

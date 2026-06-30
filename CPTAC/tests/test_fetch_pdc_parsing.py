@@ -48,3 +48,36 @@ def test_parse_study_id_raises_when_absent():
     import pytest
     with pytest.raises(ValueError):
         fetch.parse_study_id({"data": {"study": []}})
+
+
+def test_pick_report_file_selects_canonical_tmt_over_noise():
+    # A realistic proteome file listing: only the .tmt10.tsv is the gene-level report.
+    proteome_rows = [
+        {"file_name": "Supplementary_Data_Proteome_TMT.tar.gz"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Proteome.peptides.tsv"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Proteome.qcmetrics.tsv"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Proteome.summary.tsv"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Proteome.sample.txt"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Proteome.tmt10.tsv"},
+    ]
+    assert (
+        fetch.pick_report_file(proteome_rows, kind="proteome")["file_name"]
+        == "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Proteome.tmt10.tsv"
+    )
+
+    # A phospho listing: must pick phosphosite, never phosphopeptide/peptides.
+    phospho_rows = [
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Phosphoproteome.phosphopeptide.tmt10.tsv"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Phosphoproteome.peptides.tsv"},
+        {"file_name": "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Phosphoproteome.phosphosite.tmt10.tsv"},
+    ]
+    assert (
+        fetch.pick_report_file(phospho_rows, kind="phosphosite")["file_name"]
+        == "CPTAC3_Clear_Cell_Renal_Cell_Carcinoma_Phosphoproteome.phosphosite.tmt10.tsv"
+    )
+
+    # proteome selector must NOT pick a phosphoproteome report.
+    only_phospho = [{"file_name": "CPTAC3_X_Phosphoproteome.phosphosite.tmt10.tsv"}]
+    import pytest
+    with pytest.raises(ValueError):
+        fetch.pick_report_file(only_phospho, kind="proteome")
