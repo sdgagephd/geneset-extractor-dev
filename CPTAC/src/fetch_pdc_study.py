@@ -88,9 +88,14 @@ from pathlib import Path
 PDC_GRAPHQL_URL = "https://pdc.cancer.gov/graphql"
 
 _FILES_QUERY = """
-{ filesPerStudy (pdc_study_id: "%s" acceptDUA: true) {
+{ filesPerStudy (study_id: "%s" acceptDUA: true) {
     file_id file_name md5sum file_size data_category file_type
     signedUrl { url } } }
+"""
+
+_STUDY_RESOLVE_QUERY = """
+{ study (pdc_study_id: "%s" acceptDUA: true) {
+    pdc_study_id study_id analytical_fraction } }
 """
 
 _BIOSPEC_QUERY = """
@@ -121,6 +126,21 @@ def graphql_post(query: str) -> dict:
     )
     with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310 (trusted PDC endpoint)
         return json.loads(resp.read().decode("utf-8"))
+
+
+def parse_study_id(payload: dict) -> str:
+    """Extract the (latest) study_id UUID from a PDC `study` query response."""
+    studies = (payload.get("data") or {}).get("study") or []
+    for s in studies:
+        study_id = str(s.get("study_id") or "")
+        if study_id:
+            return study_id
+    raise ValueError("could not resolve study_id from PDC study query response")
+
+
+def resolve_study_id(pdc_study_id: str) -> str:
+    """Resolve a pdc_study_id (e.g. PDC000127) to its current study_id UUID."""
+    return parse_study_id(graphql_post(_STUDY_RESOLVE_QUERY % pdc_study_id))
 
 
 def download_file(url: str, dest: str | Path) -> Path:
@@ -209,8 +229,10 @@ def run_fetch(
         proteome_payload = cache["proteome_files"]
         biospec_payload = cache["biospecimen"]
     else:
-        phospho_payload = graphql_post(_FILES_QUERY % phospho_pdc_study_id)
-        proteome_payload = graphql_post(_FILES_QUERY % proteome_pdc_study_id)
+        phospho_study_uuid = resolve_study_id(phospho_pdc_study_id)
+        proteome_study_uuid = resolve_study_id(proteome_pdc_study_id)
+        phospho_payload = graphql_post(_FILES_QUERY % phospho_study_uuid)
+        proteome_payload = graphql_post(_FILES_QUERY % proteome_study_uuid)
         biospec_payload = graphql_post(_BIOSPEC_QUERY % phospho_pdc_study_id)
 
     phospho_files = parse_files_per_study(phospho_payload, role="phospho", pdc_study_id=phospho_pdc_study_id)

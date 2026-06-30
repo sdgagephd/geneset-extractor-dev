@@ -34,3 +34,17 @@ def test_parse_biospecimen_maps_condition():
     assert by_aliquot["CPT0000010004"]["condition"] == "control"
     assert sum(1 for r in rows if r["condition"] == "case") == 2
     assert sum(1 for r in rows if r["condition"] == "control") == 2
+
+
+def test_parse_study_id_returns_uuid():
+    payload = {"data": {"study": [
+        {"pdc_study_id": "PDC000127",
+         "study_id": "dbe94609-1fb3-11e9-b7f8-0a80fada099c",
+         "analytical_fraction": "Proteome"}]}}
+    assert fetch.parse_study_id(payload) == "dbe94609-1fb3-11e9-b7f8-0a80fada099c"
+
+
+def test_parse_study_id_raises_when_absent():
+    import pytest
+    with pytest.raises(ValueError):
+        fetch.parse_study_id({"data": {"study": []}})

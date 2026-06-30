@@ -27,10 +27,11 @@ All CPTAC CDAP processed matrices are open-access (CC-BY). The pipeline fetches 
 - Endpoint: `https://pdc.cancer.gov/graphql` (HTTP POST `{"query": ...}`, no authentication required)
 - `acceptDUA: true` is passed in every query to assert acceptance of the PDC data-use agreement
 
-Two queries are issued per cohort, against the phospho study ID for biospecimen and against each study ID for file listings:
+Three queries are issued per cohort: two study-resolution queries to obtain `study_id` UUIDs, one file-listing query per study (keyed by UUID), and one biospecimen query (keyed by `pdc_study_id`):
 
-- `filesPerStudy(pdc_study_id: "<id>", acceptDUA: true)` — returns `file_id`, `file_name`, `md5sum`, `file_size`, `signedUrl { url }` for every file in the study
-- `biospecimenPerStudy(pdc_study_id: "<id>", acceptDUA: true)` — returns `aliquot_submitter_id`, `sample_submitter_id`, `case_submitter_id`, `sample_type` for every aliquot
+- `study(pdc_study_id: "<id>", acceptDUA: true)` — resolves a `pdc_study_id` (e.g. `PDC000127`) to its `study_id` UUID; the pipeline first calls this for each study because `filesPerStudy(pdc_study_id: ...)` returns null-filled records for some study versions, whereas `filesPerStudy(study_id: <UUID>)` is reliable
+- `filesPerStudy(study_id: "<uuid>", acceptDUA: true)` — returns `file_id`, `file_name`, `md5sum`, `file_size`, `signedUrl { url }` for every file in the study
+- `biospecimenPerStudy(pdc_study_id: "<id>", acceptDUA: true)` — returns `aliquot_submitter_id`, `sample_submitter_id`, `case_submitter_id`, `sample_type` for every aliquot (keyed by `pdc_study_id`; this query is unaffected by the null-fill issue)
 
 For `ccrcc` the biospecimen query returns 110 Primary Tumor aliquots (mapped to condition `case`) and 84 Solid Tissue Normal aliquots (mapped to condition `control`). Aliquots with `sample_type` values that do not map to either condition (e.g. Not Reported, Cell Line) are written to `sample_annotations.tsv` with an empty condition field and are excluded from contrasts at the prepare step.
 
