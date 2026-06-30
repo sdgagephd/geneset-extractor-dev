@@ -70,67 +70,69 @@ def run_model(
         api_cache_json=api_cache_json,
     )
 
-    # 2. prepare
-    pflags = sio.prepare_flags(model)
-    prepare_args = [
-        "workflows", "ptm_prepare_public",
-        "--input_mode", "cdap_files",
-        "--ptm_report_tsv", str(fetched["phospho_report"]),
-        "--protein_report_tsv", str(fetched["proteome_report"]),
-        "--sample_annotations_tsv", str(fetched["sample_annotations"]),
-        "--out_dir", str(prepared_dir),
-        "--organism", "human",
-        "--ptm_type", pflags.get("ptm_type", "phospho"),
-        "--study_id", cohort_id,
-        "--study_label", study["cohort_label"],
-        "--assay_type_policy", pflags.get("assay_type_policy", "warn"),
-    ]
-    cmd, env = engine_cmd(dig_dir, python_bin, *prepare_args)
-    _run(cmd, env, dig_dir, log_lines)
+    try:
+        # 2. prepare
+        pflags = sio.prepare_flags(model)
+        prepare_args = [
+            "workflows", "ptm_prepare_public",
+            "--input_mode", "cdap_files",
+            "--ptm_report_tsv", str(fetched["phospho_report"]),
+            "--protein_report_tsv", str(fetched["proteome_report"]),
+            "--sample_annotations_tsv", str(fetched["sample_annotations"]),
+            "--out_dir", str(prepared_dir),
+            "--organism", "human",
+            "--ptm_type", pflags.get("ptm_type", "phospho"),
+            "--study_id", cohort_id,
+            "--study_label", study["cohort_label"],
+            "--assay_type_policy", pflags.get("assay_type_policy", "warn"),
+        ]
+        cmd, env = engine_cmd(dig_dir, python_bin, *prepare_args)
+        _run(cmd, env, dig_dir, log_lines)
 
-    # 3. overlay (read the manifest the fetch step wrote)
-    manifest_rows = sio.read_tsv(fetched["file_manifest"])
-    operation_meta = {
-        "script_url": "https://github.com/broadinstitute/geneset-extractor-dev/blob/main/CPTAC/src/run_cptac_ptm_model.py",
-    }
-    written = ovl.write_overlay(
-        manifest_rows=manifest_rows,
-        prepared_dir=str(prepared_dir),
-        operation_meta=operation_meta,
-        out_dir=model_out,
-    )
+        # 3. overlay (read the manifest the fetch step wrote)
+        manifest_rows = sio.read_tsv(fetched["file_manifest"])
+        operation_meta = {
+            "script_url": "https://github.com/broadinstitute/geneset-extractor-dev/blob/main/CPTAC/src/run_cptac_ptm_model.py",
+        }
+        written = ovl.write_overlay(
+            manifest_rows=manifest_rows,
+            prepared_dir=str(prepared_dir),
+            operation_meta=operation_meta,
+            out_dir=model_out,
+        )
 
-    # 4. extract
-    eflags = sio.extractor_flags(model)
-    extract_args = [
-        "convert", "ptm_site_matrix",
-        "--ptm_matrix_tsv", str(prepared_dir / "ptm_matrix.tsv"),
-        "--sample_metadata_tsv", str(prepared_dir / "sample_metadata.tsv"),
-        "--protein_matrix_tsv", str(prepared_dir / "protein_matrix.tsv"),
-        "--study_contrast", eflags.get("study_contrast", "condition_a_vs_b"),
-        "--condition_a", eflags.get("condition_a", "case"),
-        "--condition_b", eflags.get("condition_b", "control"),
-        "--protein_adjustment_run_mode", eflags.get("protein_adjustment_run_mode", "compare_if_protein"),
-        "--select", eflags.get("select", "top_k"),
-        "--top_k", eflags.get("top_k", "200"),
-        "--gene_aggregation", eflags.get("gene_aggregation", "signed_topk_mean"),
-        "--out_dir", str(extractor_dir),
-        "--organism", "human",
-        "--genome_build", "human",
-        "--ptm_type", pflags.get("ptm_type", "phospho"),
-        "--use_reference_bundle", "false",
-        "--emit_small_gene_sets", "true",
-        "--provenance_overlay_json", str(written["overlay_json"]),
-    ]
-    cmd, env = engine_cmd(dig_dir, python_bin, *extract_args)
-    _run(cmd, env, dig_dir, log_lines)
+        # 4. extract
+        eflags = sio.extractor_flags(model)
+        extract_args = [
+            "convert", "ptm_site_matrix",
+            "--ptm_matrix_tsv", str(prepared_dir / "ptm_matrix.tsv"),
+            "--sample_metadata_tsv", str(prepared_dir / "sample_metadata.tsv"),
+            "--protein_matrix_tsv", str(prepared_dir / "protein_matrix.tsv"),
+            "--study_contrast", eflags.get("study_contrast", "condition_a_vs_b"),
+            "--condition_a", eflags.get("condition_a", "case"),
+            "--condition_b", eflags.get("condition_b", "control"),
+            "--protein_adjustment_run_mode", eflags.get("protein_adjustment_run_mode", "compare_if_protein"),
+            "--select", eflags.get("select", "top_k"),
+            "--top_k", eflags.get("top_k", "200"),
+            "--gene_aggregation", eflags.get("gene_aggregation", "signed_topk_mean"),
+            "--out_dir", str(extractor_dir),
+            "--organism", "human",
+            "--genome_build", "human",
+            "--ptm_type", pflags.get("ptm_type", "phospho"),
+            "--use_reference_bundle", "false",
+            "--emit_small_gene_sets", "true",
+            "--provenance_overlay_json", str(written["overlay_json"]),
+        ]
+        cmd, env = engine_cmd(dig_dir, python_bin, *extract_args)
+        _run(cmd, env, dig_dir, log_lines)
 
-    (model_out / "run.log").write_text("\n".join(log_lines), encoding="utf-8")
-    (model_out / "commands.md").write_text(
-        "# Commands\n\n```\n" + "\n".join(l for l in log_lines if l.startswith("$ ")) + "\n```\n",
-        encoding="utf-8",
-    )
-    return model_out
+        return model_out
+    finally:
+        (model_out / "run.log").write_text("\n".join(log_lines), encoding="utf-8")
+        (model_out / "commands.md").write_text(
+            "# Commands\n\n```\n" + "\n".join(l for l in log_lines if l.startswith("$ ")) + "\n```\n",
+            encoding="utf-8",
+        )
 
 
 def main(argv: list[str] | None = None) -> int:

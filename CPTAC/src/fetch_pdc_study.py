@@ -84,6 +84,7 @@ import csv
 import hashlib
 import json
 import shutil
+import sys
 import urllib.request
 from pathlib import Path
 
@@ -119,6 +120,11 @@ def md5_file(path: str | Path) -> str:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def _safe_name(file_name: str) -> str:
+    """Reduce an API-supplied file name to its basename to prevent path traversal."""
+    return Path(file_name).name
 
 
 def graphql_post(query: str) -> dict:
@@ -193,16 +199,23 @@ def _load_api_cache(path: str | Path) -> dict:
 def _acquire_report(
     *, file_rec: dict, out_dir: Path, source_dir: Path | None, offline: bool
 ) -> Path:
-    dest = out_dir / file_rec["file_name"]
+    safe_name = _safe_name(file_rec["file_name"])
+    dest = out_dir / safe_name
     if offline:
-        src = Path(source_dir) / file_rec["file_name"]
+        src = Path(source_dir) / safe_name
         if not src.exists():
             raise FileNotFoundError(f"offline: expected report {src}")
         shutil.copyfile(src, dest)
     else:
         download_file(file_rec["signed_url"], dest)
     computed = md5_file(dest)
-    if file_rec["md5sum"] and computed != file_rec["md5sum"]:
+    if not file_rec["md5sum"]:
+        print(
+            f"warning: PDC API returned no md5sum for {file_rec['file_name']}; "
+            "skipping download integrity check",
+            file=sys.stderr,
+        )
+    elif computed != file_rec["md5sum"]:
         raise ValueError(
             f"md5 mismatch for {file_rec['file_name']}: api={file_rec['md5sum']} computed={computed}"
         )

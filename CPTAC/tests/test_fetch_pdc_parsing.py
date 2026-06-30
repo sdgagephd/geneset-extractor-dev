@@ -81,3 +81,9 @@ def test_pick_report_file_selects_canonical_tmt_over_noise():
     import pytest
     with pytest.raises(ValueError):
         fetch.pick_report_file(only_phospho, kind="proteome")
+
+
+def test_safe_name_strips_path_components():
+    assert fetch._safe_name("CPTAC3_X_Proteome.tmt10.tsv") == "CPTAC3_X_Proteome.tmt10.tsv"
+    assert fetch._safe_name("../../etc/passwd") == "passwd"
+    assert fetch._safe_name("a/b/c.phosphosite.tmt10.tsv") == "c.phosphosite.tmt10.tsv"
