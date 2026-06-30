@@ -22,12 +22,13 @@ def test_overlay_keys_prepared_inputs_with_pdc_identity():
     )
     inputs = overlay["inputs"]
     ptm = inputs["/run/prepared/ptm_matrix.tsv"]
-    assert ptm["persistent_id"] == "drs://dg.4DFC/111"
+    assert ptm["persistent_id"] == "111"
     assert ptm["local_id"] == "drs://dg.4DFC/111"
     assert ptm["dcc_url"] == "https://pdc.cancer.gov/pdc/study/PDC000128"
     assert ptm["drc_url"] == ovl.CRDC_DRC_URL
     prot = inputs["/run/prepared/protein_matrix.tsv"]
-    assert prot["persistent_id"] == "drs://dg.4DFC/333"
+    assert prot["persistent_id"] == "333"
+    assert prot["local_id"] == "drs://dg.4DFC/333"
     assert prot["dcc_url"] == "https://pdc.cancer.gov/pdc/study/PDC000127"
     meta = inputs["/run/prepared/sample_metadata.tsv"]
     assert meta["dcc_url"] == "https://pdc.cancer.gov/pdc/study/PDC000128"

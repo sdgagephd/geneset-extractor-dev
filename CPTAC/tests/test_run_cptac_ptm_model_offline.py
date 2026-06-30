@@ -57,5 +57,6 @@ def test_run_model_offline_end_to_end(tmp_path):
     file_nodes = [n for n in graph["nodes"] if n["type"] == "File" and n["name"] == "ptm_matrix.tsv"]
     assert file_nodes, "ptm_matrix.tsv File node missing"
     c = file_nodes[0]["c2m2_properties"]
-    assert c["persistent_id"] == "drs://dg.4DFC/11111111-1111-1111-1111-111111111111"
+    assert c["persistent_id"] == "11111111-1111-1111-1111-111111111111"
+    assert c["local_id"] == "drs://dg.4DFC/11111111-1111-1111-1111-111111111111"
     assert file_nodes[0]["dcc_url"] == "https://pdc.cancer.gov/pdc/study/PDC000128"

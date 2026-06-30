@@ -23,7 +23,7 @@ def _by_role(manifest_rows: list[dict]) -> dict[str, dict]:
 
 def _file_overlay(rec: dict, *, provider_suffix: str) -> dict:
     return {
-        "persistent_id": rec["drs_uri"],
+        "persistent_id": rec["file_id"],
         "local_id": rec["drs_uri"],
         "dcc_url": PDC_STUDY_URL(rec["pdc_study_id"]),
         "drc_url": CRDC_DRC_URL,
