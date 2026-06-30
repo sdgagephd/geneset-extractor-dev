@@ -1,0 +1,7 @@
+Gene	CPT0000010003 Log Ratio	CPT0000010003 Unshared Log Ratio	CPT0000010004 Log Ratio	CPT0000010004 Unshared Log Ratio	CPT0000020003 Log Ratio	CPT0000020003 Unshared Log Ratio	CPT0000020004 Log Ratio	CPT0000020004 Unshared Log Ratio	NCBIGeneID	Organism
+median	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0		human
+AKT1	0.3	0.3	0.1	0.1	0.2	0.2	0.0	0.0	207	human
+MTOR	0.2	0.2	0.1	0.1	0.2	0.2	0.1	0.1	2475	human
+EGFR	0.4	0.4	0.1	0.1	0.3	0.3	0.0	0.0	1956	human
+MAPK1	0.1	0.1	0.0	0.0	0.1	0.1	0.0	0.0	5594	human
+GSK3B	-0.2	-0.2	0.0	0.0	-0.1	-0.1	0.0	0.0	2932	human

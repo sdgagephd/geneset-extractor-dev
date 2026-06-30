@@ -1,0 +1,14 @@
+{
+  "data": {
+    "filesPerStudy": [
+      {
+        "file_id": "33333333-3333-3333-3333-333333333333",
+        "file_name": "CCRCC_Proteome.tmt10.tsv",
+        "md5sum": "PLACEHOLDER_PROTEOME_MD5",
+        "file_size": 4567,
+        "data_category": "Processed Mass Spectra",
+        "signedUrl": {"url": "https://example.test/ccrcc_proteome.tsv"}
+      }
+    ]
+  }
+}

@@ -157,6 +157,7 @@
 !KOMP2/**/*.png
 !CPTAC/**/*.py
 !CPTAC/**/*.json
+!CPTAC/tests/fixtures/reports/*.tsv
 !CPTAC/**/*.r
 !CPTAC/**/*.R
 !CPTAC/**/*.sh
